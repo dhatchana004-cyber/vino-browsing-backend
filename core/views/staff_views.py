@@ -1,0 +1,134 @@
+"""
+Staff Management API views — Owner-only CRUD for staff users.
+"""
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from django.utils import timezone
+from ..models import User, Attendance, ServiceEntry
+from ..serializers import UserSerializer, StaffCreateSerializer, ResetPasswordSerializer
+from ..permissions import IsOwner
+
+
+class StaffListCreateView(APIView):
+    """
+    GET  /api/staff/ — List all staff with status.
+    POST /api/staff/ — Create new staff user.
+    """
+    permission_classes = [IsOwner]
+
+    def get(self, request):
+        staff = User.objects.filter(role='staff')
+        today = timezone.localdate()
+
+        staff_data = []
+        for s in staff:
+            attendance = Attendance.objects.filter(staff=s, date=today).first()
+            is_online = attendance is not None and attendance.logout_time is None
+            today_entries = ServiceEntry.objects.filter(staff=s, date=today).count()
+
+            data = UserSerializer(s).data
+            data['is_online'] = is_online
+            data['today_entries'] = today_entries
+            staff_data.append(data)
+
+        return Response(staff_data)
+
+    def post(self, request):
+        serializer = StaffCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+class StaffDetailView(APIView):
+    """
+    PATCH /api/staff/{id}/ — Update staff details.
+    DELETE /api/staff/{id}/ — Soft-delete staff (hides from list, preserves data).
+    """
+    permission_classes = [IsOwner]
+
+    def patch(self, request, pk):
+        try:
+            staff = User.objects.get(pk=pk, role='staff')
+        except User.DoesNotExist:
+            return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only allow updating specific fields
+        if 'first_name' in request.data:
+            staff.first_name = request.data['first_name']
+        if 'username' in request.data:
+            staff.username = request.data['username']
+        if 'is_active' in request.data:
+            staff.is_active = request.data['is_active']
+        
+        staff.save()
+        return Response(UserSerializer(staff).data)
+
+    def delete(self, request, pk):
+        try:
+            staff = User.objects.get(pk=pk, role='staff')
+        except User.DoesNotExist:
+            return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Soft delete: prevent login and hide from Staff Management, but keep data
+        staff.is_active = False
+        staff.role = 'deleted_staff' 
+        staff.save()
+
+        # Force logout just in case
+        tokens = OutstandingToken.objects.filter(user=staff)
+        for token in tokens:
+            try:
+                BlacklistedToken.objects.get_or_create(token=token)
+            except Exception:
+                pass
+
+        return Response({'detail': f'{staff.username} has been deleted.'})
+
+
+class StaffResetPasswordView(APIView):
+    """POST /api/staff/{id}/reset-password/ — Reset staff password."""
+    permission_classes = [IsOwner]
+
+    def post(self, request, pk):
+        try:
+            staff = User.objects.get(pk=pk, role='staff')
+        except User.DoesNotExist:
+            return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        staff.set_password(serializer.validated_data['new_password'])
+        staff.save()
+        return Response({'detail': f'Password reset for {staff.username}.'})
+
+
+class StaffForceLogoutView(APIView):
+    """POST /api/staff/{id}/logout/ — Force logout staff (blacklist tokens + clock-out)."""
+    permission_classes = [IsOwner]
+
+    def post(self, request, pk):
+        try:
+            staff = User.objects.get(pk=pk, role='staff')
+        except User.DoesNotExist:
+            return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Blacklist all outstanding tokens for this staff
+        tokens = OutstandingToken.objects.filter(user=staff)
+        for token in tokens:
+            try:
+                BlacklistedToken.objects.get_or_create(token=token)
+            except Exception:
+                pass
+
+        # Clock out any open sessions
+        attendances = Attendance.objects.filter(
+            staff=staff, logout_time__isnull=True
+        )
+        for att in attendances:
+            att.clock_out()
+
+        return Response({'detail': f'{staff.username} has been logged out.'})
