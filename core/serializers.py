@@ -16,6 +16,7 @@ from .models import (
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+    role = serializers.CharField(required=False)
 
     def validate(self, data):
         user = authenticate(username=data['username'], password=data['password'])
@@ -23,6 +24,8 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid username or password.')
         if not user.is_active:
             raise serializers.ValidationError('This account has been deactivated.')
+        if 'role' in data and data['role'] and user.role != data['role']:
+            raise serializers.ValidationError(f"Invalid account type. Please use the {user.role.title()} login tab.")
         data['user'] = user
         return data
 
@@ -326,6 +329,10 @@ class JobUpdateSerializer(serializers.ModelSerializer):
 class EducationApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationApplication
-        fields = ['id', 'exam_name', 'last_date', 'exam_date', 'is_active', 'created_at']
+        fields = [
+            'id', 'title', 'exam_name', 'image', 'post_count', 
+            'qualification', 'last_date', 'exam_date', 
+            'description', 'is_active', 'created_at'
+        ]
         read_only_fields = ['id', 'created_at']
 

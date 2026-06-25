@@ -361,7 +361,12 @@ class JobUpdate(models.Model):
 class EducationApplication(models.Model):
     """Education application updates displayed on the public site."""
 
+    title = models.CharField(max_length=200, blank=True, default='')
     exam_name = models.CharField(max_length=200)
+    image = models.ImageField(upload_to='education/', null=True, blank=True)
+    post_count = models.CharField(max_length=100, blank=True, default='')
+    qualification = models.CharField(max_length=200, blank=True, default='')
+    description = models.TextField(blank=True, default='')
     last_date = models.DateField(null=True, blank=True)
     exam_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -371,5 +376,5 @@ class EducationApplication(models.Model):
         ordering = ['-last_date', '-created_at']
 
     def __str__(self):
-        return self.exam_name
+        return self.title or self.exam_name
 
