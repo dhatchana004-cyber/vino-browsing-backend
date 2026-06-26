@@ -128,13 +128,7 @@ if os.environ.get('CLOUDINARY_URL'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'
 else:
-    # Serve absolute URLs in production to fix Vercel frontend broken images
-    if os.environ.get('RENDER_EXTERNAL_URL'):
-        MEDIA_URL = f"{os.environ.get('RENDER_EXTERNAL_URL')}/media/"
-    elif not DEBUG:
-        MEDIA_URL = 'https://vino-backend.onrender.com/media/'
-    else:
-        MEDIA_URL = '/media/'
+    MEDIA_URL = '/media/'
         
 MEDIA_ROOT = BASE_DIR / 'media'
 
