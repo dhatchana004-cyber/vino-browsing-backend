@@ -64,7 +64,7 @@ class DashboardView(APIView):
 
             staff_users = User.objects.filter(role='staff', is_active=True)
             for s in staff_users:
-                attendance = Attendance.objects.filter(staff=s, logout_time__isnull=True).first()
+                attendance = Attendance.objects.filter(staff=s, logout_time__isnull=True, date=today).first()
                 is_working = attendance is not None
                 # Count today's entries for this staff
                 staff_entries = ServiceEntry.objects.filter(staff=s, date=today)
@@ -75,7 +75,7 @@ class DashboardView(APIView):
                 staff_status.append({
                     'id': s.id,
                     'name': s.get_full_name() or s.username,
-                    'profile_photo': request.build_absolute_uri(s.profile_photo.url) if s.profile_photo else None,
+                    'profile_photo': s.profile_photo.url if s.profile_photo else None,
                     'is_working': is_working,
                     'login_time': attendance.login_time.isoformat() if attendance else None,
                     'entries_count': staff_totals['count'] or 0,

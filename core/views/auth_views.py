@@ -153,12 +153,12 @@ class LogoutView(APIView):
             pass  # Token may already be blacklisted or invalid
 
         # Auto clock-out: update any open attendance
-        attendance = Attendance.objects.filter(
+        open_sessions = Attendance.objects.filter(
             staff=request.user,
             logout_time__isnull=True,
-        ).first()
-        if attendance:
-            attendance.clock_out()
+        )
+        for session in open_sessions:
+            session.clock_out()
 
         return Response({'detail': 'Logged out successfully.'}, status=status.HTTP_200_OK)
 
