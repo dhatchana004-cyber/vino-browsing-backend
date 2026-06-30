@@ -121,5 +121,5 @@ class VerifyReportPasswordView(APIView):
         if not settings.reports_password or settings.reports_password == password:
             return Response({'success': True})
             
-        return Response({'success': False, 'detail': 'Incorrect password'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'success': False, 'detail': 'Incorrect password'}, status=status.HTTP_400_BAD_REQUEST)
 

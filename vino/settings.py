@@ -128,7 +128,11 @@ if os.environ.get('CLOUDINARY_URL'):
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'
 else:
-    MEDIA_URL = '/media/'
+    # Fix for Frontend 404 Errors: Provide absolute URL for media in production
+    if not DEBUG:
+        MEDIA_URL = 'https://api.vinobrowsing.com/media/'
+    else:
+        MEDIA_URL = '/media/'
         
 MEDIA_ROOT = BASE_DIR / 'media'
 
