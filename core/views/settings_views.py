@@ -10,6 +10,7 @@ from ..serializers import (
     StaffPermissionSerializer,
     PasswordChangeSerializer,
     OpeningBalanceSerializer,
+    SystemSettingsSerializer,
 )
 from ..permissions import IsOwner
 
@@ -123,3 +124,22 @@ class VerifyReportPasswordView(APIView):
             
         return Response({'success': False, 'detail': 'Incorrect password'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class SystemSettingsView(APIView):
+    """
+    GET  /api/settings/ — Retrieve attendance rules.
+    PUT  /api/settings/ — Update attendance rules.
+    """
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get(self, request):
+        settings = SystemSettings.get_settings()
+        serializer = SystemSettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings = SystemSettings.get_settings()
+        serializer = SystemSettingsSerializer(settings, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'success': True, 'message': 'Settings updated successfully.'})

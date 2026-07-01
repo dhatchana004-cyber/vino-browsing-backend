@@ -7,6 +7,7 @@ from .models import (
     User, Customer, Service, ServiceEntry,
     Attendance, Expense, StaffPermission, OpeningBalance, LoginRequest,
     SiteSettings, WhyChooseUsPoint, PublicService, JobUpdate, EducationApplication,
+    SystemSettings,
 )
 
 
@@ -249,6 +250,18 @@ class OpeningBalanceSerializer(serializers.ModelSerializer):
         model = OpeningBalance
         fields = ['id', 'date', 'amount', 'set_by', 'created_at']
         read_only_fields = ['id', 'set_by', 'created_at']
+
+
+# ---------------------------------------------------------------------------
+# System Settings Serializer
+# ---------------------------------------------------------------------------
+class SystemSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SystemSettings
+        fields = ['reports_password', 'attendance_late_time', 'attendance_working_days']
+        extra_kwargs = {
+            'reports_password': {'write_only': True},
+        }
 
 
 # ---------------------------------------------------------------------------

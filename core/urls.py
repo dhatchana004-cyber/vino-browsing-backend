@@ -15,7 +15,7 @@ from .views.dashboard_views import DashboardView
 from .views.report_views import (
     DailyReportView, MonthlyReportView, YearlyReportView, StaffDailyReportView
 )
-from .views.attendance_views import AttendanceViewSet, TodayAttendanceView
+from .views.attendance_views import AttendanceViewSet, TodayAttendanceView, AttendanceSummaryView
 from .views.staff_views import (
     StaffListCreateView, StaffDetailView,
     StaffResetPasswordView, StaffForceLogoutView
@@ -29,7 +29,8 @@ from .views.download_views import (
 from .views.settings_views import (
     StaffPermissionListView, StaffPermissionDeleteView,
     ChangePasswordView, OpeningBalanceView,
-    ReportPasswordView, VerifyReportPasswordView
+    ReportPasswordView, VerifyReportPasswordView,
+    SystemSettingsView,
 )
 from .views.publicsite_views import (
     SiteSettingsView, WhyChooseUsListCreateView, WhyChooseUsDetailView,
@@ -69,6 +70,7 @@ urlpatterns = [
 
     # Attendance today
     path('attendance/today/', TodayAttendanceView.as_view(), name='attendance-today'),
+    path('attendance/summary/', AttendanceSummaryView.as_view(), name='attendance-summary'),
 
     # Staff management (owner only)
     path('staff/', StaffListCreateView.as_view(), name='staff-list-create'),
@@ -86,6 +88,7 @@ urlpatterns = [
     path('download/expenses/', DownloadExpensesView.as_view(), name='download-expenses'),
 
     # Settings
+    path('settings/', SystemSettingsView.as_view(), name='system-settings'),
     path('settings/permissions/', StaffPermissionListView.as_view(), name='settings-permissions'),
     path('settings/permissions/<int:pk>/', StaffPermissionDeleteView.as_view(), name='settings-permission-delete'),
     path('settings/change-password/', ChangePasswordView.as_view(), name='settings-change-password'),

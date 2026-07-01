@@ -3,6 +3,8 @@ VINO Browsing Management System — Database Models
 
 All 7 core models for the browsing center management system.
 """
+import datetime
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import FileExtensionValidator
@@ -250,6 +252,15 @@ class LoginRequest(models.Model):
 class SystemSettings(models.Model):
     """Global system settings."""
     reports_password = models.CharField(max_length=128, blank=True)
+    attendance_late_time = models.TimeField(
+        default=datetime.time(10, 0),
+        help_text="Staff arriving after this time are marked as Late"
+    )
+    attendance_working_days = models.CharField(
+        max_length=50,
+        default="1,2,3,4,5,6",
+        help_text="Comma separated days (0=Sunday, 1=Monday, ... 6=Saturday)"
+    )
 
     class Meta:
         verbose_name_plural = 'System Settings'
