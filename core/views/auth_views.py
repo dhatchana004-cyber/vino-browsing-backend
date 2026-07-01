@@ -9,7 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from django.utils import timezone
-from django.utils import timezone
 from ..models import Attendance, User, LoginRequest
 from ..serializers import LoginSerializer, UserSerializer, LoginRequestSerializer
 
@@ -39,9 +38,18 @@ class LoginView(APIView):
             # Owner logs in immediately
             refresh = RefreshToken.for_user(user)
             today = timezone.localdate()
-            # Auto clock-out any stuck open sessions
-            open_sessions = Attendance.objects.filter(staff=user, logout_time__isnull=True)
-            for session in open_sessions:
+            # Auto clock-out any stuck open sessions from previous days
+            orphaned_sessions = Attendance.objects.filter(
+                staff=user, logout_time__isnull=True
+            ).exclude(date=today)
+            for session in orphaned_sessions:
+                session.clock_out()
+
+            # Also close any existing open sessions for today (re-login scenario)
+            today_open = Attendance.objects.filter(
+                staff=user, date=today, logout_time__isnull=True
+            )
+            for session in today_open:
                 session.clock_out()
                 
             # Create a fresh attendance record for this login
@@ -84,17 +92,25 @@ class LoginStatusView(APIView):
             user = req.staff
             refresh = RefreshToken.for_user(user)
             today = timezone.localdate()
-            # Auto clock-out any stuck open sessions
-            open_sessions = Attendance.objects.filter(staff=user, logout_time__isnull=True)
-            for session in open_sessions:
+            # Auto clock-out any stuck open sessions from previous days
+            orphaned_sessions = Attendance.objects.filter(
+                staff=user, logout_time__isnull=True
+            ).exclude(date=today)
+            for session in orphaned_sessions:
                 session.clock_out()
-                
-            # Create a fresh attendance record for this login
-            Attendance.objects.create(
-                staff=user,
-                date=today,
-                login_time=timezone.now(),
-            )
+
+            # Create attendance only if an active session doesn't already exist today
+            # (prevents duplicates from repeated polling)
+            already_active = Attendance.objects.filter(
+                staff=user, date=today, logout_time__isnull=True
+            ).exists()
+            if not already_active:
+                Attendance.objects.create(
+                    staff=user,
+                    date=today,
+                    login_time=timezone.now(),
+                )
+
             return Response({
                 'status': 'approved',
                 'access': str(refresh.access_token),

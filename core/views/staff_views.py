@@ -23,10 +23,19 @@ class StaffListCreateView(APIView):
         staff = User.objects.filter(role='staff')
         today = timezone.localdate()
 
+        # Auto-close orphaned attendance sessions from previous days
+        orphaned = Attendance.objects.filter(
+            logout_time__isnull=True
+        ).exclude(date=today)
+        for session in orphaned:
+            session.clock_out()
+
         staff_data = []
         for s in staff:
-            attendance = Attendance.objects.filter(staff=s, date=today).first()
-            is_online = attendance is not None and attendance.logout_time is None
+            # Only check today's open sessions for online status
+            is_online = Attendance.objects.filter(
+                staff=s, date=today, logout_time__isnull=True
+            ).exists()
             today_entries = ServiceEntry.objects.filter(staff=s, date=today).count()
 
             data = UserSerializer(s).data

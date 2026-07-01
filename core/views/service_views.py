@@ -15,3 +15,4 @@ class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
     permission_classes = [IsOwnerOrReadOnly]
     search_fields = ['name']
+    pagination_class = None

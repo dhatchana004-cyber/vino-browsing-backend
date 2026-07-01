@@ -35,6 +35,14 @@ class AttendanceViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = AttendanceFilter
 
     def get_queryset(self):
+        # Auto-close orphaned attendance sessions from previous days
+        today = timezone.localdate()
+        orphaned = Attendance.objects.filter(
+            logout_time__isnull=True
+        ).exclude(date=today)
+        for session in orphaned:
+            session.clock_out()
+
         qs = Attendance.objects.select_related('staff').filter(staff__role='staff')
         if self.request.user.role == 'staff':
             qs = qs.filter(staff=self.request.user)

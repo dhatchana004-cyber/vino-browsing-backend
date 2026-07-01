@@ -62,6 +62,14 @@ class DashboardView(APIView):
             pending_qs = LoginRequest.objects.filter(status='pending').order_by('created_at')
             pending_logins = LoginRequestSerializer(pending_qs, many=True).data
 
+            # Auto-close orphaned attendance sessions from previous days
+            # These are sessions that were never properly clocked out (browser crash, etc.)
+            orphaned_sessions = Attendance.objects.filter(
+                logout_time__isnull=True
+            ).exclude(date=today)
+            for session in orphaned_sessions:
+                session.clock_out()
+
             staff_users = User.objects.filter(role='staff', is_active=True)
             for s in staff_users:
                 attendance = Attendance.objects.filter(staff=s, logout_time__isnull=True, date=today).first()
