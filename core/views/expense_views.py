@@ -24,7 +24,17 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     filterset_class = ExpenseFilter
 
     def get_queryset(self):
-        return Expense.objects.all()
+        return Expense.objects.filter(is_deleted=False)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        from django.utils import timezone
+        from rest_framework import status
+        from rest_framework.response import Response
+        instance = self.get_object()
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_deleted', 'deleted_at'])
+        return Response(status=status.HTTP_204_NO_CONTENT)

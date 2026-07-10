@@ -7,7 +7,7 @@ from .models import (
     User, Customer, Service, ServiceEntry,
     Attendance, Expense, StaffPermission, OpeningBalance, LoginRequest,
     SiteSettings, WhyChooseUsPoint, PublicService, JobUpdate, EducationApplication,
-    SystemSettings,
+    SystemSettings, EntryDocument,
 )
 
 
@@ -38,8 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'full_name',
-                  'role', 'is_active', 'date_joined', 'permissions', 'profile_photo']
-        read_only_fields = ['id', 'date_joined']
+                  'role', 'is_active', 'date_joined', 'permissions', 'profile_photo', 'deleted_at']
+        read_only_fields = ['id', 'date_joined', 'deleted_at']
 
     def get_full_name(self, obj):
         return obj.get_full_name() or obj.username
@@ -92,8 +92,8 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id', 'name', 'phone', 'address', 'notes',
-                  'visit_count', 'total_paid', 'last_visit', 'created_at']
-        read_only_fields = ['id', 'created_at']
+                  'visit_count', 'total_paid', 'last_visit', 'created_at', 'deleted_at']
+        read_only_fields = ['id', 'created_at', 'deleted_at']
 
     def get_visit_count(self, obj):
         return obj.entries.count()
@@ -124,8 +124,8 @@ class CustomerDetailSerializer(CustomerSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'is_active', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'name', 'is_active', 'created_at', 'deleted_at']
+        read_only_fields = ['id', 'created_at', 'deleted_at']
 
 
 # ---------------------------------------------------------------------------
@@ -139,9 +139,9 @@ class ServiceEntrySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'customer', 'customer_name', 'phone', 'staff',
             'service', 'amount', 'charge', 'profit', 'srn_number',
-            'remarks', 'document', 'status', 'date', 'created_at',
+            'remarks', 'document', 'status', 'date', 'created_at', 'deleted_at'
         ]
-        read_only_fields = ['id', 'profit', 'date', 'created_at']
+        read_only_fields = ['id', 'profit', 'date', 'created_at', 'deleted_at']
 
     def validate_document(self, value):
         if value and value.size > 5 * 1024 * 1024:
@@ -162,7 +162,25 @@ class ServiceEntrySerializer(serializers.ModelSerializer):
             )
             validated_data['customer'] = customer
 
-        return super().create(validated_data)
+        request = self.context.get('request')
+        documents = []
+        if request and request.FILES:
+            documents = request.FILES.getlist('documents')
+            if documents and not validated_data.get('document'):
+                validated_data['document'] = documents[0]
+                documents = documents[1:]
+
+        entry = super().create(validated_data)
+
+        for doc in documents:
+            EntryDocument.objects.create(entry=entry, file=doc)
+
+        return entry
+
+class EntryDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntryDocument
+        fields = ['id', 'file']
 
 
 class ServiceEntryListSerializer(serializers.ModelSerializer):
@@ -170,13 +188,14 @@ class ServiceEntryListSerializer(serializers.ModelSerializer):
 
     service_name = serializers.CharField(source='service.name', read_only=True)
     staff_name = serializers.SerializerMethodField()
+    additional_documents = EntryDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServiceEntry
         fields = [
             'id', 'customer_name', 'phone', 'service', 'service_name',
             'staff', 'staff_name', 'amount', 'charge', 'profit',
-            'srn_number', 'document', 'status', 'date', 'created_at',
+            'srn_number', 'document', 'additional_documents', 'status', 'date', 'created_at', 'deleted_at'
         ]
 
     def get_staff_name(self, obj):
@@ -224,8 +243,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
 class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
-        fields = ['id', 'title', 'amount', 'date', 'created_by', 'created_at']
-        read_only_fields = ['id', 'created_by', 'created_at']
+        fields = ['id', 'title', 'amount', 'date', 'created_by', 'created_at', 'deleted_at']
+        read_only_fields = ['id', 'created_by', 'created_at', 'deleted_at']
 
 
 # ---------------------------------------------------------------------------
@@ -319,13 +338,13 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
 class WhyChooseUsPointSerializer(serializers.ModelSerializer):
     class Meta:
         model = WhyChooseUsPoint
-        fields = ['id', 'text', 'order']
+        fields = ['id', 'text', 'order', 'deleted_at']
 
 
 class PublicServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicService
-        fields = ['id', 'title', 'description', 'icon', 'order', 'is_active']
+        fields = ['id', 'title', 'description', 'icon', 'order', 'is_active', 'deleted_at']
 
 
 class JobUpdateSerializer(serializers.ModelSerializer):
@@ -334,9 +353,9 @@ class JobUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'exam_name', 'image', 'post_count', 
             'qualification', 'last_date', 'exam_date', 
-            'description', 'start_date', 'end_date', 'is_active', 'created_at'
+            'description', 'start_date', 'end_date', 'is_active', 'created_at', 'deleted_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'deleted_at']
 
 
 class EducationApplicationSerializer(serializers.ModelSerializer):
@@ -345,7 +364,7 @@ class EducationApplicationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'exam_name', 'image', 'post_count', 
             'qualification', 'last_date', 'exam_date', 
-            'description', 'is_active', 'created_at'
+            'description', 'is_active', 'created_at', 'deleted_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'deleted_at']
 

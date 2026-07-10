@@ -31,9 +31,19 @@ class CustomerViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'created_at']
 
     def get_queryset(self):
-        return Customer.objects.prefetch_related('entries')
+        return Customer.objects.filter(is_deleted=False).prefetch_related('entries')
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return CustomerDetailSerializer
         return CustomerSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        from django.utils import timezone
+        instance = self.get_object()
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.save()
+        from rest_framework import status
+        from rest_framework.response import Response
+        return Response(status=status.HTTP_204_NO_CONTENT)

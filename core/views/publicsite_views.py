@@ -49,7 +49,7 @@ class WhyChooseUsListCreateView(APIView):
     def get(self, request):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
-        points = WhyChooseUsPoint.objects.all()
+        points = WhyChooseUsPoint.objects.filter(is_deleted=False)
         return Response(WhyChooseUsPointSerializer(points, many=True).data)
 
     def post(self, request):
@@ -98,7 +98,7 @@ class PublicServiceListCreateView(APIView):
     def get(self, request):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
-        services = PublicService.objects.all()
+        services = PublicService.objects.filter(is_deleted=False)
         return Response(PublicServiceSerializer(services, many=True).data)
 
     def post(self, request):
@@ -148,7 +148,7 @@ class JobUpdateListCreateView(APIView):
     def get(self, request):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
-        jobs = JobUpdate.objects.all()
+        jobs = JobUpdate.objects.filter(is_deleted=False)
         return Response(JobUpdateSerializer(jobs, many=True).data)
 
     def post(self, request):
@@ -198,7 +198,7 @@ class EducationApplicationListCreateView(APIView):
     def get(self, request):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
-        apps = EducationApplication.objects.all()
+        apps = EducationApplication.objects.filter(is_deleted=False)
         return Response(EducationApplicationSerializer(apps, many=True).data)
 
     def post(self, request):
@@ -250,15 +250,15 @@ class PublicSiteDataView(APIView):
         return Response({
             'settings': SiteSettingsSerializer(settings, context=ctx).data,
             'why_choose_us': WhyChooseUsPointSerializer(
-                WhyChooseUsPoint.objects.all(), many=True
+                WhyChooseUsPoint.objects.filter(is_deleted=False), many=True
             ).data,
             'services': PublicServiceSerializer(
-                PublicService.objects.filter(is_active=True), many=True
+                PublicService.objects.filter(is_active=True, is_deleted=False), many=True
             ).data,
             'jobs': JobUpdateSerializer(
-                JobUpdate.objects.filter(is_active=True), many=True
+                JobUpdate.objects.filter(is_active=True, is_deleted=False), many=True
             ).data,
             'education_apps': EducationApplicationSerializer(
-                EducationApplication.objects.filter(is_active=True), many=True
+                EducationApplication.objects.filter(is_active=True, is_deleted=False), many=True
             ).data,
         })

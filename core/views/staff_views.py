@@ -20,7 +20,7 @@ class StaffListCreateView(APIView):
     permission_classes = [IsOwner]
 
     def get(self, request):
-        staff = User.objects.filter(role='staff')
+        staff = User.objects.filter(role='staff', is_deleted=False)
         today = timezone.localdate()
 
         # Auto-close orphaned attendance sessions from previous days
@@ -29,6 +29,14 @@ class StaffListCreateView(APIView):
         ).exclude(date=today)
         for session in orphaned:
             session.clock_out()
+
+        # TEMPORARY FIX: Automatically rename any old deleted users on the live database
+        deleted_users = User.objects.filter(role='deleted_staff')
+        import uuid
+        for u in deleted_users:
+            if '_del_' not in u.username:
+                u.username = f"{u.username}_del_{str(uuid.uuid4())[:6]}"
+                u.save()
 
         staff_data = []
         for s in staff:
@@ -61,7 +69,7 @@ class StaffDetailView(APIView):
 
     def patch(self, request, pk):
         try:
-            staff = User.objects.get(pk=pk, role='staff')
+            staff = User.objects.get(pk=pk, role='staff', is_deleted=False)
         except User.DoesNotExist:
             return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -78,13 +86,17 @@ class StaffDetailView(APIView):
 
     def delete(self, request, pk):
         try:
-            staff = User.objects.get(pk=pk, role='staff')
+            staff = User.objects.get(pk=pk, role='staff', is_deleted=False)
         except User.DoesNotExist:
             return Response({'detail': 'Staff not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         # Soft delete: prevent login and hide from Staff Management, but keep data
         staff.is_active = False
-        staff.role = 'deleted_staff' 
+        staff.is_deleted = True
+        staff.deleted_at = timezone.now()
+        staff.role = 'deleted_staff'
+        import uuid
+        staff.username = f"{staff.username}_del_{str(uuid.uuid4())[:6]}"
         staff.save()
 
         # Force logout just in case

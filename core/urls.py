@@ -38,6 +38,7 @@ from .views.publicsite_views import (
     JobUpdateListCreateView, JobUpdateDetailView, PublicSiteDataView,
     EducationApplicationListCreateView, EducationApplicationDetailView
 )
+from .views.recycle_bin_views import RecycleBinView
 
 # DRF router for ViewSets
 router = DefaultRouter()
@@ -95,6 +96,9 @@ urlpatterns = [
     path('settings/opening-balance/', OpeningBalanceView.as_view(), name='settings-opening-balance'),
     path('settings/reports-password/', ReportPasswordView.as_view(), name='settings-reports-password'),
     path('settings/verify-reports-password/', VerifyReportPasswordView.as_view(), name='settings-verify-reports-password'),
+
+    # Recycle Bin
+    path('recycle-bin/', RecycleBinView.as_view(), name='recycle-bin'),
 
     # Router URLs (entries, customers, services, attendance, expenses)
     path('', include(router.urls)),

@@ -21,6 +21,8 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='staff')
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     profile_photo = models.ImageField(upload_to='profiles/', null=True, blank=True)
 
     class Meta:
@@ -45,6 +47,8 @@ class Customer(models.Model):
     phone = models.CharField(max_length=15, blank=True, db_index=True)
     address = models.TextField(blank=True)
     notes = models.TextField(blank=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -59,6 +63,8 @@ class Service(models.Model):
 
     name = models.CharField(max_length=200, unique=True)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -118,6 +124,8 @@ class ServiceEntry(models.Model):
         default='pending',
     )
     date = models.DateField(default=timezone.localdate, db_index=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -132,6 +140,26 @@ class ServiceEntry(models.Model):
         """Auto-calculate profit before saving."""
         self.profit = self.amount - self.charge
         super().save(*args, **kwargs)
+
+
+class EntryDocument(models.Model):
+    """Additional documents for a service entry."""
+    entry = models.ForeignKey(
+        ServiceEntry,
+        on_delete=models.CASCADE,
+        related_name='additional_documents'
+    )
+    file = models.FileField(
+        upload_to='documents/%Y/%m/%d/',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'pdf'])]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Document for {self.entry}"
 
 
 class Attendance(models.Model):
@@ -175,6 +203,8 @@ class Expense(models.Model):
         on_delete=models.CASCADE,
         related_name='expenses',
     )
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -320,6 +350,8 @@ class WhyChooseUsPoint(models.Model):
 
     text = models.CharField(max_length=300)
     order = models.PositiveIntegerField(default=0)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['order', 'id']
@@ -337,6 +369,8 @@ class PublicService(models.Model):
         help_text='Emoji or icon name')
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['order', 'id']
@@ -360,6 +394,8 @@ class JobUpdate(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -381,6 +417,8 @@ class EducationApplication(models.Model):
     last_date = models.DateField(null=True, blank=True)
     exam_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

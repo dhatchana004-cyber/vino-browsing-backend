@@ -50,7 +50,7 @@ class ServiceEntryViewSet(viewsets.ModelViewSet):
         return ServiceEntrySerializer
 
     def get_queryset(self):
-        qs = ServiceEntry.objects.select_related('service', 'staff', 'customer')
+        qs = ServiceEntry.objects.select_related('service', 'staff', 'customer').filter(is_deleted=False)
         if self.request.user.role == 'staff':
             qs = qs.filter(staff=self.request.user)
         return qs
@@ -102,3 +102,11 @@ class ServiceEntryViewSet(viewsets.ModelViewSet):
         entry.status = serializer.validated_data['status']
         entry.save(update_fields=['status'])
         return Response(ServiceEntryListSerializer(entry).data)
+
+    def destroy(self, request, *args, **kwargs):
+        from django.utils import timezone
+        instance = self.get_object()
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.save(update_fields=['is_deleted', 'deleted_at'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
