@@ -81,8 +81,11 @@ class WhyChooseUsDetailView(APIView):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
         try:
+            from django.utils import timezone
             point = WhyChooseUsPoint.objects.get(pk=pk)
-            point.delete()
+            point.is_deleted = True
+            point.deleted_at = timezone.now()
+            point.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except WhyChooseUsPoint.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -130,8 +133,11 @@ class PublicServiceDetailView(APIView):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
         try:
+            from django.utils import timezone
             service = PublicService.objects.get(pk=pk)
-            service.delete()
+            service.is_deleted = True
+            service.deleted_at = timezone.now()
+            service.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except PublicService.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -181,8 +187,11 @@ class JobUpdateDetailView(APIView):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
         try:
+            from django.utils import timezone
             job = JobUpdate.objects.get(pk=pk)
-            job.delete()
+            job.is_deleted = True
+            job.deleted_at = timezone.now()
+            job.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except JobUpdate.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -230,8 +239,11 @@ class EducationApplicationDetailView(APIView):
         if request.user.role != 'owner':
             return Response(status=status.HTTP_403_FORBIDDEN)
         try:
+            from django.utils import timezone
             app = EducationApplication.objects.get(pk=pk)
-            app.delete()
+            app.is_deleted = True
+            app.deleted_at = timezone.now()
+            app.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except EducationApplication.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)

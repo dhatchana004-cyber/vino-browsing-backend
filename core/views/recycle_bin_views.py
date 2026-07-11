@@ -13,7 +13,8 @@ from ..models import (
 )
 from ..serializers import (
     ServiceEntryListSerializer, ExpenseSerializer, CustomerSerializer,
-    ServiceSerializer, UserSerializer
+    ServiceSerializer, UserSerializer, JobUpdateSerializer,
+    EducationApplicationSerializer, PublicServiceSerializer, WhyChooseUsPointSerializer
 )
 from ..permissions import IsOwner
 
@@ -34,6 +35,10 @@ class RecycleBinView(APIView):
         Customer.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
         Service.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
         User.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        JobUpdate.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        EducationApplication.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        PublicService.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
+        WhyChooseUsPoint.objects.filter(is_deleted=True, deleted_at__lt=cutoff_date).delete()
 
     def get(self, request):
         self._cleanup_old_items()
@@ -43,6 +48,10 @@ class RecycleBinView(APIView):
         customers = Customer.objects.filter(is_deleted=True).order_by('-deleted_at')
         services = Service.objects.filter(is_deleted=True).order_by('-deleted_at')
         staff = User.objects.filter(is_deleted=True).order_by('-deleted_at')
+        jobs = JobUpdate.objects.filter(is_deleted=True).order_by('-deleted_at')
+        education_apps = EducationApplication.objects.filter(is_deleted=True).order_by('-deleted_at')
+        public_services = PublicService.objects.filter(is_deleted=True).order_by('-deleted_at')
+        why_choose_us = WhyChooseUsPoint.objects.filter(is_deleted=True).order_by('-deleted_at')
 
         return Response({
             'entries': ServiceEntryListSerializer(entries, many=True).data,
@@ -50,6 +59,10 @@ class RecycleBinView(APIView):
             'customers': CustomerSerializer(customers, many=True).data,
             'services': ServiceSerializer(services, many=True).data,
             'staff': UserSerializer(staff, many=True).data,
+            'jobs': JobUpdateSerializer(jobs, many=True).data,
+            'education_apps': EducationApplicationSerializer(education_apps, many=True).data,
+            'public_services': PublicServiceSerializer(public_services, many=True).data,
+            'why_choose_us': WhyChooseUsPointSerializer(why_choose_us, many=True).data,
         })
 
     def post(self, request):
@@ -75,6 +88,10 @@ class RecycleBinView(APIView):
             'customer': Customer,
             'service': Service,
             'staff': User,
+            'job': JobUpdate,
+            'education': EducationApplication,
+            'public_service': PublicService,
+            'why_choose_us': WhyChooseUsPoint,
         }
         model_class = MODEL_MAP.get(item_type)
         
