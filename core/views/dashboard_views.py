@@ -49,8 +49,8 @@ class DashboardView(APIView):
         opening = OpeningBalance.objects.filter(date=today).first()
         opening_balance = opening.amount if opening else Decimal('0')
 
-        # Final profit = opening_balance + total_amount - total_charge - expenses
-        final_profit = opening_balance + total_amount - total_charge - total_expenses
+        # Final profit = opening_balance + profit - expenses
+        final_profit = opening_balance + total_profit - total_expenses
 
         # Unique customers today
         total_customers = entries_qs.values('phone').distinct().count()

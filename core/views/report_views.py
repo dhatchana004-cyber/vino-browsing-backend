@@ -131,6 +131,19 @@ class MonthlyReportView(APIView):
                 ).order_by('-total_profit')
             )
 
+        # Opening balance (sum for the month)
+        opening_total = OpeningBalance.objects.filter(
+            date__year=year, date__month=month
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        total_amount = totals['total_amount'] or Decimal('0')
+        total_charge = totals['total_charge'] or Decimal('0')
+        profit = totals['total_profit'] or Decimal('0')
+        final_profit = opening_total + total_amount - total_charge - expenses_total
+
+        # Unique customers
+        total_customers = entries_qs.values('phone').exclude(phone='').distinct().count()
+
         return Response({
             'month': month,
             'year': year,
@@ -177,6 +190,19 @@ class YearlyReportView(APIView):
             total_charge=Sum('charge'),
             total_profit=Sum('profit'),
         ).order_by('date__month')
+
+        # Opening balance (sum for the year)
+        opening_total = OpeningBalance.objects.filter(
+            date__year=year
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        total_amount = totals['total_amount'] or Decimal('0')
+        total_charge = totals['total_charge'] or Decimal('0')
+        profit = totals['total_profit'] or Decimal('0')
+        final_profit = opening_total + total_amount - total_charge - expenses_total
+
+        # Unique customers
+        total_customers = entries_qs.values('phone').exclude(phone='').distinct().count()
 
         return Response({
             'year': year,
