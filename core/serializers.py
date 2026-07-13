@@ -3,6 +3,7 @@ DRF Serializers for the VINO Browsing Management System.
 """
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.db import models
 from .models import (
     User, Customer, Service, ServiceEntry,
     Attendance, Expense, StaffPermission, OpeningBalance, LoginRequest,
@@ -319,13 +320,6 @@ class DashboardSerializer(serializers.Serializer):
     recent_entries = ServiceEntryListSerializer(many=True)
 
 
-# Need to import models for aggregate
-from django.db import models as db_models
-
-# Patch CustomerSerializer to use correct models reference
-CustomerSerializer.get_total_paid = lambda self, obj: float(
-    obj.entries.aggregate(total=db_models.Sum('amount'))['total'] or 0
-)
 
 
 # ---------------------------------------------------------------------------
