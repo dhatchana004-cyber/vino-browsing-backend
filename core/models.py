@@ -291,6 +291,12 @@ class SystemSettings(models.Model):
         default="1,2,3,4,5,6",
         help_text="Comma separated days (0=Sunday, 1=Monday, ... 6=Saturday)"
     )
+    pan_card_charge = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=107.00,
+        help_text="Default charge amount for PAN card services"
+    )
 
     class Meta:
         verbose_name_plural = 'System Settings'

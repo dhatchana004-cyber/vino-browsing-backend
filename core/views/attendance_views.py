@@ -171,7 +171,12 @@ class AttendanceSummaryView(APIView):
                     # No login on this date
                     is_working_day = day_iso in working_isoweekdays
                     has_passed = current_date < today
-                    if is_working_day and has_passed:
+                    
+                    # Do not count leave for days before the staff member was created/hired
+                    joined_date = timezone.localtime(staff.date_joined).date()
+                    is_after_join = current_date >= joined_date
+
+                    if is_working_day and has_passed and is_after_join:
                         leaves += 1
 
                 current_date += timedelta(days=1)

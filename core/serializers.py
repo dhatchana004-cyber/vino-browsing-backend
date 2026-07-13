@@ -152,14 +152,20 @@ class ServiceEntrySerializer(serializers.ModelSerializer):
         # Auto-calculate profit
         validated_data['profit'] = validated_data.get('amount', 0) - validated_data.get('charge', 0)
 
-        # Auto-create/link customer if phone provided
+        # Auto-create/link customer for EVERY entry
         phone = validated_data.get('phone', '')
         customer_name = validated_data.get('customer_name', '')
-        if phone and not validated_data.get('customer'):
-            customer, _ = Customer.objects.get_or_create(
-                phone=phone,
-                defaults={'name': customer_name or 'Unknown'},
-            )
+        if not validated_data.get('customer'):
+            if phone:
+                customer, _ = Customer.objects.get_or_create(
+                    phone=phone,
+                    defaults={'name': customer_name or 'Unknown'},
+                )
+            else:
+                customer = Customer.objects.create(
+                    phone='',
+                    name=customer_name or 'Walk-in Customer'
+                )
             validated_data['customer'] = customer
 
         request = self.context.get('request')
@@ -277,7 +283,7 @@ class OpeningBalanceSerializer(serializers.ModelSerializer):
 class SystemSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemSettings
-        fields = ['reports_password', 'attendance_late_time', 'attendance_working_days']
+        fields = ['reports_password', 'attendance_late_time', 'attendance_working_days', 'pan_card_charge']
         extra_kwargs = {
             'reports_password': {'write_only': True},
         }

@@ -52,7 +52,7 @@ class DailyReportView(APIView):
         final_profit = opening_balance + profit - expenses_total
 
         # Unique customers
-        total_customers = entries_qs.values('phone').exclude(phone='').distinct().count()
+        total_customers = entries_qs.values('customer').distinct().count()
 
         # Service breakdown
         service_breakdown = entries_qs.values('service__name').annotate(
@@ -142,7 +142,7 @@ class MonthlyReportView(APIView):
         final_profit = opening_total + total_amount - total_charge - expenses_total
 
         # Unique customers
-        total_customers = entries_qs.values('phone').exclude(phone='').distinct().count()
+        total_customers = entries_qs.values('customer').distinct().count()
 
         return Response({
             'month': month,
@@ -202,7 +202,7 @@ class YearlyReportView(APIView):
         final_profit = opening_total + total_amount - total_charge - expenses_total
 
         # Unique customers
-        total_customers = entries_qs.values('phone').exclude(phone='').distinct().count()
+        total_customers = entries_qs.values('customer').distinct().count()
 
         return Response({
             'year': year,

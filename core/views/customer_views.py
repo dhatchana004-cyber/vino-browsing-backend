@@ -11,8 +11,8 @@ from ..serializers import CustomerSerializer, CustomerDetailSerializer
 
 
 class CustomerFilter(filters.FilterSet):
-    date_from = filters.DateFilter(field_name='created_at', lookup_expr='date__gte')
-    date_to = filters.DateFilter(field_name='created_at', lookup_expr='date__lte')
+    date_from = filters.DateFilter(field_name='entries__date', lookup_expr='gte', distinct=True)
+    date_to = filters.DateFilter(field_name='entries__date', lookup_expr='lte', distinct=True)
 
     class Meta:
         model = Customer
