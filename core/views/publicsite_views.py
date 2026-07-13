@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-from ..models import SiteSettings, WhyChooseUsPoint, PublicService, JobUpdate, EducationApplication
-from ..serializers import (
+from core.models import SiteSettings, WhyChooseUsPoint, PublicService, JobUpdate, EducationApplication
+from core.serializers import (
     SiteSettingsSerializer, WhyChooseUsPointSerializer,
     PublicServiceSerializer, JobUpdateSerializer, EducationApplicationSerializer,
 )

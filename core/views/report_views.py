@@ -8,8 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import date, timedelta
-from ..models import ServiceEntry, Expense, OpeningBalance
-from ..serializers import ServiceEntryListSerializer
+from core.models import ServiceEntry, Expense, OpeningBalance
+from core.serializers import ServiceEntryListSerializer
 
 
 class DailyReportView(APIView):

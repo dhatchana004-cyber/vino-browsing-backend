@@ -6,8 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
-from ..models import Customer
-from ..serializers import CustomerSerializer, CustomerDetailSerializer
+from core.models import Customer
+from core.serializers import CustomerSerializer, CustomerDetailSerializer
 
 
 class CustomerFilter(filters.FilterSet):
