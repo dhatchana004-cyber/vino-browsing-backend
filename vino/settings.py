@@ -177,7 +177,7 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://127.0.0.1:5173,https://vino-browsing-9yi9dmypb-dhatchana004-cybers-projects.vercel.app'
+    'http://localhost:5173,http://127.0.0.1:5173,https://vino-browsing-9yi9dmypb-dhatchana004-cybers-projects.vercel.app,https://admin.vinobrowsing.com,https://vinobrowsing.com,https://www.vinobrowsing.com'
 ).split(',')
 
 # Allow all origins in dev mode (for ngrok, other devices, etc.)
